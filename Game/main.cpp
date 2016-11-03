@@ -6,7 +6,7 @@ int main(int argc, char ** argv)
 
   // game code eventually goes here
 
-  SDL_Quit();
+  SDL_Quit(); // TEST
 
   return 0;
 }
