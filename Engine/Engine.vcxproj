@@ -19,10 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AssertionManager.h" />
     <ClInclude Include="EngineManager.h" />
+    <ClInclude Include="Singleton.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Game\main.cpp" />
+    <ClCompile Include="AssertionManager.cpp" />
     <ClCompile Include="EngineManager.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

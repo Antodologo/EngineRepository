@@ -21,6 +21,12 @@
     <ClInclude Include="EngineManager.h">
       <Filter>Managers</Filter>
     </ClInclude>
+    <ClInclude Include="AssertionManager.h">
+      <Filter>Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="Singleton.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineManager.cpp">
@@ -28,6 +34,9 @@
     </ClCompile>
     <ClCompile Include="..\Game\main.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AssertionManager.cpp">
+      <Filter>Managers</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
