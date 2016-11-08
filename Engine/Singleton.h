@@ -2,7 +2,7 @@
 #define SINGLETON_H
 
 // For asserts
-#include "Headers.h"
+#include <string>
 
 /**
 Class Singleton
