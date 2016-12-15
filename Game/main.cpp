@@ -1,118 +1,246 @@
 //Using SDL and standard IO
 #include <SDL.h>
 #include <stdio.h>
+#include <cstdio>  
+#include <map>  
 
-//Screen dimension constants
-const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 480;
+#include <string>
 
-//Starts up SDL and creates window
-bool init();
 
-//Loads media
-bool loadMedia();
 
-//Frees media and shuts down SDL
-void close();
 
-//The window we'll be rendering to
-SDL_Window* gWindow = NULL;
+class Sprite {
 
-//The surface contained by the window
-SDL_Surface* gScreenSurface = NULL;
+  public:
 
-//The image we will load and show on the screen
-SDL_Surface* gHelloWorld = NULL;
+    int x;
+    int y;
+    Sprite() : x(0), y(0) { }
 
-bool init()
+};
+
+class Game {
+    // Constants
+    static const int          DISPLAY_WIDTH     = 480;
+    static const int          DISPLAY_HEIGHT    = 320;
+    static const int          HERO_SPEED        = 2;
+
+    static const float        UPDATE_INTERVAL;
+
+    static const std::string  MEDIA_PATH;
+
+  public:
+
+    Game();
+    ~Game();
+    void Start();
+    void Stop();
+
+    // Render manager
+    void Draw();
+    void FillRect(SDL_Rect* rc, int r, int g, int b);
+    
+    void Run();
+    void Update();
+
+    // Time manager
+    void FPSChanged(int fps);
+
+    // Input Manager
+    void EventManagement();
+
+    void OnQuit();
+    void OnKeyDown(SDL_Event* event);
+    void OnKeyUp(SDL_Event* event);
+
+  private:
+
+    std::map<int, int>  mKeys; // No SDLK_LAST. SDL2 migration guide suggests std::map  
+    int                 mRunning;
+    SDL_Window*         mWindow;
+    SDL_Renderer*       mRenderer;
+    Sprite              mHero;
+
+};
+
+/*************************************************************************************/
+/*************************************************************************************/
+/***********************************   CPP   *****************************************/
+/*************************************************************************************/
+/*************************************************************************************/
+
+const float         Game::UPDATE_INTERVAL = 1000.0f / 60.0f;
+const std::string   Game::MEDIA_PATH      = "../Media/";
+
+Game::Game() :
+  mRunning(0), mWindow(NULL), mRenderer(NULL)
 {
-  //Initialization flag
-  bool success = true;
-
-  //Initialize SDL
-  if (SDL_Init(SDL_INIT_VIDEO) < 0)
-  {
-    printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
-    success = false;
-  }
-  else
-  {
-    //Create window
-    gWindow = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-    if (gWindow == NULL)
-    {
-      printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
-      success = false;
-    }
-    else
-    {
-      //Get window surface
-      gScreenSurface = SDL_GetWindowSurface(gWindow);
-    }
-  }
-
-  return success;
 }
 
-bool loadMedia()
+Game::~Game() 
 {
-  //Loading success flag
-  bool success = true;
-
-  //Load splash image
-  gHelloWorld = SDL_LoadBMP("../Media/hello_world.bmp");;
-  if (gHelloWorld == NULL)
-  {
-    printf("Unable to load image %s! SDL Error: %s\n", "../Media/hello_world.bmp", SDL_GetError());
-    success = false;
-  }
-
-  return success;
+  Stop();
 }
 
-void close()
+void Game::Start()
 {
-  //Deallocate surface
-  SDL_FreeSurface(gHelloWorld);
-  gHelloWorld = NULL;
+  int flags = SDL_WINDOW_SHOWN;
+  if (SDL_Init(SDL_INIT_EVERYTHING)) {
+    return;
+  }
 
-  //Destroy window
-  SDL_DestroyWindow(gWindow);
-  gWindow = NULL;
+  if (SDL_CreateWindowAndRenderer(DISPLAY_WIDTH, DISPLAY_HEIGHT, flags, &mWindow, &mRenderer)) {
+    return;
+  }
 
-  //Quit SDL subsystems
+  mRunning = 1;
+  Run();
+}
+
+void Game::Draw()
+{
+  SDL_Rect heroRect;
+
+  // Clear screen  
+  SDL_SetRenderDrawColor(mRenderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+  SDL_RenderClear(mRenderer);
+
+  // Render hero  
+  heroRect.x = mHero.x;
+  heroRect.y = mHero.y;
+  heroRect.w = 20;
+  heroRect.h = 20;
+  FillRect(&heroRect, 255, 0, 0);
+
+  SDL_RenderPresent(mRenderer);
+}
+
+void Game::Stop()
+{
+  if (NULL != mRenderer) {
+    SDL_DestroyRenderer(mRenderer);
+    mRenderer = NULL;
+  }
+  if (NULL != mWindow) {
+    SDL_DestroyWindow(mWindow);
+    mWindow = NULL;
+  }
   SDL_Quit();
 }
 
-int main(int argc, char* args[])
+void Game::FillRect(SDL_Rect* rc, int r, int g, int b)
 {
-  //Start up SDL and create window
-  if (!init())
-  {
-    printf("Failed to initialize!\n");
-  }
-  else
-  {
-    //Load media
-    if (!loadMedia())
-    {
-      printf("Failed to load media!\n");
+  SDL_SetRenderDrawColor(mRenderer, r, g, b, SDL_ALPHA_OPAQUE);
+  SDL_RenderFillRect(mRenderer, rc);
+}
+
+void Game::FPSChanged(int fps)
+{
+  //sprintf(szFps, "%s: %d FPS", "SDL2 Base C++ - Use Arrow Keys to Move", fps);
+  std::string title = std::string("Test - FPS = ") + std::to_string( fps );
+
+  SDL_SetWindowTitle(mWindow, title.c_str() );
+}
+
+// Input manager
+void Game::EventManagement()
+{
+  SDL_Event event;
+
+  if (SDL_PollEvent(&event)) {
+    switch (event.type) {
+    case SDL_QUIT:
+      OnQuit();
+      break;
+    case SDL_KEYDOWN:
+      OnKeyDown(&event);
+      break;
+    case SDL_KEYUP:
+      OnKeyUp(&event);
+      break;
+    case SDL_MOUSEBUTTONDOWN:
+    case SDL_MOUSEBUTTONUP:
+    case SDL_MOUSEMOTION:
+      break;
     }
-    else
-    {
-      //Apply the image
-      SDL_BlitSurface(gHelloWorld, NULL, gScreenSurface, NULL);
+  }
+}
 
-      //Update the surface
-      SDL_UpdateWindowSurface(gWindow);
+void Game::Run()
+{
+  // Time manager
+  int past = SDL_GetTicks();
+  int now = past;
+  int pastFps = past;
+  int fps = 0;
 
-      //Wait two seconds
-      SDL_Delay(5000);
+  while (mRunning) {
+    int timeElapsed = 0;
+    
+    // Input Manager
+    EventManagement();
+
+    // update/draw  
+    now = SDL_GetTicks();
+    timeElapsed = now - past;
+    if (timeElapsed >= UPDATE_INTERVAL) {
+      past = now;
+
+      Update();
+      Draw();
+
+      ++fps;
+    }
+
+    // fps  
+    if (now - pastFps >= 1000) {
+      pastFps = now;
+      FPSChanged(fps);
+      fps = 0;
     }
   }
+}
 
-  //Free resources and close SDL
-  close();
+void Game::Update()
+{
+  if (mKeys[SDLK_LEFT]) {
+    mHero.x -= HERO_SPEED;
+  }
+  if (mKeys[SDLK_RIGHT]) {
+    mHero.x += HERO_SPEED;
+  }
+  if (mKeys[SDLK_UP]) {
+    mHero.y -= HERO_SPEED;
+  }
+  if (mKeys[SDLK_DOWN]) {
+    mHero.y += HERO_SPEED;
+  }
+}
 
+
+// Event or input
+void Game::OnQuit()
+{
+  mRunning = 0;
+}
+
+// Input Manager
+void Game::OnKeyDown(SDL_Event* evt)
+{
+  mKeys[evt->key.keysym.sym] = 1;
+}
+void Game::OnKeyUp(SDL_Event* evt)
+{
+  mKeys[evt->key.keysym.sym] = 0;
+}
+
+
+
+
+// MAIN
+int main(int argc, char** argv)
+{
+  Game game;
+  game.Start();
   return 0;
 }
